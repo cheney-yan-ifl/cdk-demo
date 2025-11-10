@@ -1,0 +1,121 @@
+# Azure DevOps Pipeline: Deploy to Development Environment
+# Trigger: Push to 'dev' branch
+# Purpose: Continuous deployment to dev environment for rapid feedback
+
+trigger:
+  branches:
+    include:
+      - dev
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  - name: ENVIRONMENT
+    value: 'dev'
+  - name: AWS_REGION
+    value: 'ap-southeast-2'
+
+stages:
+  # Stage 1: Deploy Shared Infrastructure
+  - stage: DeployInfrastructure
+    displayName: 'Deploy Shared Infrastructure'
+    jobs:
+      - job: DeploySharedInfra
+        displayName: 'Deploy VPC, RDS, ALB, ECS Cluster'
+        steps:
+          - task: NodeTool@0
+            displayName: 'Install Node.js'
+            inputs:
+              versionSpec: '18.x'
+
+          - task: AWSShellScript@1
+            displayName: 'Bootstrap CDK (if needed)'
+            inputs:
+              awsCredentials: '$(AWS_SERVICE_CONNECTION)'
+              regionName: '$(AWS_REGION)'
+              scriptType: 'inline'
+              inlineScript: |
+                cd infrastructure-shared
+                make bootstrap ENV=$(ENVIRONMENT)
+
+          - task: AWSShellScript@1
+            displayName: 'Deploy Shared Infrastructure'
+            inputs:
+              awsCredentials: '$(AWS_SERVICE_CONNECTION)'
+              regionName: '$(AWS_REGION)'
+              scriptType: 'inline'
+              inlineScript: |
+                cd infrastructure-shared
+                make deploy ENV=$(ENVIRONMENT)
+
+          - task: AWSShellScript@1
+            displayName: 'Run Infrastructure Tests'
+            inputs:
+              awsCredentials: '$(AWS_SERVICE_CONNECTION)'
+              regionName: '$(AWS_REGION)'
+              scriptType: 'inline'
+              inlineScript: |
+                cd infrastructure-shared
+                make test
+
+  # Stage 2: Deploy Microservice
+  - stage: DeployMicroservice
+    displayName: 'Deploy Order Processor Microservice'
+    dependsOn: DeployInfrastructure
+    condition: succeeded()
+    jobs:
+      - job: DeployOrderProcessor
+        displayName: 'Build & Deploy Order Processor'
+        steps:
+          - task: NodeTool@0
+            displayName: 'Install Node.js'
+            inputs:
+              versionSpec: '18.x'
+
+          - task: Docker@2
+            displayName: 'Login to ECR'
+            inputs:
+              command: login
+              containerRegistry: '$(AWS_SERVICE_CONNECTION)'
+
+          - task: AWSShellScript@1
+            displayName: 'Build and Push Docker Image'
+            inputs:
+              awsCredentials: '$(AWS_SERVICE_CONNECTION)'
+              regionName: '$(AWS_REGION)'
+              scriptType: 'inline'
+              inlineScript: |
+                cd microservice-order-processor
+                make docker-build ENV=$(ENVIRONMENT)
+                make docker-push ENV=$(ENVIRONMENT)
+
+          - task: AWSShellScript@1
+            displayName: 'Deploy Microservice'
+            inputs:
+              awsCredentials: '$(AWS_SERVICE_CONNECTION)'
+              regionName: '$(AWS_REGION)'
+              scriptType: 'inline'
+              inlineScript: |
+                cd microservice-order-processor
+                make deploy ENV=$(ENVIRONMENT)
+
+          - task: AWSShellScript@1
+            displayName: 'Run Microservice Tests'
+            inputs:
+              awsCredentials: '$(AWS_SERVICE_CONNECTION)'
+              regionName: '$(AWS_REGION)'
+              scriptType: 'inline'
+              inlineScript: |
+                cd microservice-order-processor
+                make test
+
+          - task: AWSShellScript@1
+            displayName: 'Display Service URL'
+            inputs:
+              awsCredentials: '$(AWS_SERVICE_CONNECTION)'
+              regionName: '$(AWS_REGION)'
+              scriptType: 'inline'
+              inlineScript: |
+                cd microservice-order-processor
+                make info ENV=$(ENVIRONMENT)
