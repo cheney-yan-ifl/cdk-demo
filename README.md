@@ -1,25 +1,24 @@
 # Overall
 
-Quick deployment guide for the generated project. In the real world, I should separate all these into separate GitHub repos, but for demo purposes, I consolidate into one. 
+Quick guide for my homework. 
 
-# Infrastructure Deploymnet
+In the real world, I should separate all these into separate GitHub repos.
 
-This is a running application that can be deployed to a target account. It will be more useful if you look at the generated resources to evaluate the effects of it. 
+# Infrastructure Deployment
+
+This is a running application that can be deployed to a target account. It will be more useful if you look at the generated resources to evaluate its effects.
 
 ## Prerequisites
 
 - Node.js 18+, AWS CLI, Docker, Make, psql
 - AWS account with permissions for VPC, ECS, RDS, ALB, CloudWatch, IAM
-- AWS CLI configured with profile `personal-sydney`. (I used this to test myself. Feel free to change it to your credentials/profile to execute.)
-
-**Costs**: Dev ~$50-100/month, Staging ~$150-250/month, Prod ~$500-800/month
+- AWS CLI configured with profile `personal-sydney`. Populate the credentials for it. 
 
 ---
 
 ## Quick Deploy
 
-Please test dev only for testing. Stage and production -- they are using much more expensive configurations. You can just stick to dev for cheaper cost.
-
+**I only tested dev**. Stage and production use much more expensive configurations. 
 ```bash
 # 1. Verify AWS access
 aws sts get-caller-identity --profile personal-sydney
@@ -32,7 +31,7 @@ make deploy ENV=dev
 # Creates: VPC, ECS Cluster, RDS PostgreSQL, ALB, CloudWatch
 # Note: npm install is handled automatically by the Makefile
 
-# 3. Apply database migrations (see database-migrations/README.md for details)
+# 3. Apply database migrations 
 cd ../database-migrations
 make test
 make info ENV=dev
@@ -43,14 +42,14 @@ cd ../microservice-order-processor
 make deploy ENV=dev
 # Builds Docker image, deploys ECS service, creates SQS queue
 
-# You will see the applicaiton URLS at the end of the deployment.
+# You will see the application URLs at the end of the deployment.
 ```
 
 ---
 
 ## Verify Deployment
 
-Just click the Users (mock app) endpoint. It will demonstrate the app checks the sqs size for available messages and also list the db for available users. (demonstration purpose.)
+Just click the Users (mock app) endpoint. It will demonstrate that the app checks the SQS queue size for available messages and lists the database for available users (demonstration purpose).
 
 ---
 
@@ -81,7 +80,7 @@ cd ../infrastructure-shared && make destroy ENV=dev
 
 ---
 
-## What it generated
+## What it generates
 
 ### Deployed Resources Diagram
 
@@ -95,10 +94,10 @@ cd ../infrastructure-shared && make destroy ENV=dev
 │  │  ┌──────────────────────────────────────────────────────────────┐   │   │
 │  │  │              PUBLIC SUBNETS (2 AZs)                           │   │   │
 │  │  │  ┌──────────▼──────────────────────────▼──────────┐         │   │   │
-│  │  │  │   Application Load Balancer (ALB)              │         │   │   │
+│  │  │  │   Application Load Balancer (ALB)               │         │   │   │
 │  │  │  │   - HTTP Listener (Port 80)                     │         │   │   │
-│  │  │  │   - Security Group: Allow 0.0.0.0/0:80         │         │   │   │
-│  │  │  │   - Access Logs → S3 Bucket                    │         │   │   │
+│  │  │  │   - Security Group: Allow 0.0.0.0/0:80          │         │   │   │
+│  │  │  │   - Access Logs → S3 Bucket                     │         │   │   │
 │  │  │  └─────────────────────┬──────────────────────────┘         │   │   │
 │  │  └──────────────────────────┼────────────────────────────────────┘   │   │
 │  │                             │                                          │   │
@@ -107,13 +106,13 @@ cd ../infrastructure-shared && make destroy ENV=dev
 │  │  │  ┌──────────────────────────────────────────────┐           │   │   │
 │  │  │  │         ECS CLUSTER (Fargate)                │           │   │   │
 │  │  │  │  ┌────────────────────────────────────┐     │           │   │   │
-│  │  │  │  │  ECS Service: order-processor      │     │           │   │   │
-│  │  │  │  │  - Fargate Tasks (1-5 instances)   │     │           │   │   │
-│  │  │  │  │  - Auto-scaling: CPU-based         │     │           │   │   │
-│  │  │  │  │  - Container: Node.js App          │     │           │   │   │
-│  │  │  │  │  - Health Check: /health           │     │           │   │   │
-│  │  │  │  │  - Target Group → ALB              │     │           │   │   │
-│  │  │  │  │  - Task Role: IAM Permissions      │     │           │   │   │
+│  │  │  │  │  ECS Service: order-processor       │     │           │   │   │
+│  │  │  │  │  - Fargate Tasks (1-5 instances)    │     │           │   │   │
+│  │  │  │  │  - Auto-scaling: CPU-based          │     │           │   │   │
+│  │  │  │  │  - Container: Node.js App           │     │           │   │   │
+│  │  │  │  │  - Health Check: /health            │     │           │   │   │
+│  │  │  │  │  - Target Group → ALB               │     │           │   │   │
+│  │  │  │  │  - Task Role: IAM Permissions       │     │           │   │   │
 │  │  │  │  └────────┬───────────────────────────┘     │           │   │   │
 │  │  │  │           │                                  │           │   │   │
 │  │  │  └───────────┼──────────────────────────────────┘           │   │   │
@@ -122,13 +121,13 @@ cd ../infrastructure-shared && make destroy ENV=dev
 │  │  ┌──────────────▼──────────────────────────────────────────────┐   │   │
 │  │  │              ISOLATED SUBNETS (2 AZs)                        │   │   │
 │  │  │  ┌────────────────────────────────────────┐                 │   │   │
-│  │  │  │  RDS PostgreSQL (orderdb)              │                 │   │   │
-│  │  │  │  - Instance: t3.micro                  │                 │   │   │
-│  │  │  │  - Storage: 20GB gp3                   │                 │   │   │
-│  │  │  │  - Multi-AZ: Disabled (dev)            │                 │   │   │
-│  │  │  │  - Backup: 7 days retention            │                 │   │   │
-│  │  │  │  - Encryption: At rest                 │                 │   │   │
-│  │  │  │  - Security Group: Allow Private only  │                 │   │   │
+│  │  │  │  RDS PostgreSQL (orderdb)               │                 │   │   │
+│  │  │  │  - Instance: t3.micro                   │                 │   │   │
+│  │  │  │  - Storage: 20GB gp3                    │                 │   │   │
+│  │  │  │  - Multi-AZ: Disabled (dev)             │                 │   │   │
+│  │  │  │  - Backup: 7 days retention             │                 │   │   │
+│  │  │  │  - Encryption: At rest                  │                 │   │   │
+│  │  │  │  - Security Group: Allow Private only   │                 │   │   │
 │  │  │  └────────────────────────────────────────┘                 │   │   │
 │  │  └─────────────────────────────────────────────────────────────┘   │   │
 │  └────────────────────────────────────────────────────────────────────┘   │
@@ -185,8 +184,8 @@ RDS PostgreSQL (Isolated Subnet) + SQS Queue (Regional)
 
 
 **What's Included**:
-- One code, Multi-environment architecture (dev/staging/prod)
-- Well architectured network
+- Single codebase, multi-environment architecture (dev/staging/prod)
+- Well-architected network
 - Infrastructure as Code (AWS CDK + TypeScript)
 - Serverless containers (ECS Fargate)
 - Managed database (RDS PostgreSQL)
@@ -194,18 +193,18 @@ RDS PostgreSQL (Isolated Subnet) + SQS Queue (Regional)
 - Observability (CloudWatch Logs, Metrics, Alarms)
 - Security (Private subnets, security groups, IAM roles)
 
-**What's NOT Included** (mainly due to time/resource limit):
-- No Route53 hosted zone defined, so domain related functions are not included
-  - SSL certificates, HTTPS endpoint on ALB, 
+**What's NOT Included** (mainly due to time/resource limits):
+- No Route53 hosted zone defined, so domain-related functions are not included
+  - SSL certificates, HTTPS endpoint on ALB
   - ALB rules are based on path (hack) rather than domain name
 - IAM database authentication (uses static secrets in Secrets Manager)
 - Blue-green deployments (rolling updates only)
 - WAF/API Gateway/Access control
 
 **Known Limitations**:
-- If developers need to access database, a dedicated EC2 instance is required. Additional guardrail around it is needed.
-- Docker Image tagging uses `latest` (should use semantic versioning)
-- No automated secret rotation for RDS DB -- but not needed if we use IAM DB auth.
+- If developers need to access the database, a dedicated EC2 instance for port forwarding is needed.
+- Docker image tagging uses `latest` (should use semantic versioning)
+- No automated secret rotation for RDS database -- but not needed if we use IAM database authentication
 
 ---
 
@@ -231,7 +230,7 @@ This project includes a **minimal, Makefile-driven CI/CD pipeline** for Azure De
 │                     GIT BRANCHING STRATEGY                       │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                  │
-│  dev branch  ────────→  Automatic Deploy to DEV                 │
+│  develop branch  ────────→  Automatic Deploy to DEV                 │
 │      ↓                                                           │
 │      │                                                           │
 │  merge to master                                                 │
@@ -258,7 +257,7 @@ This project includes a **minimal, Makefile-driven CI/CD pipeline** for Azure De
 
 ```
 azure-pipelines/
-├── deploy-to-dev.yml          # Triggers: push to dev branch
+├── deploy-to-dev.yml          # Triggers: push to develop branch
 ├── deploy-to-staging.yml      # Triggers: push to master branch
 ├── deploy-to-production.yml   # Triggers: manual only
 ```
@@ -266,11 +265,11 @@ azure-pipelines/
 ## Key Design Decisions
 
 ### 1. Makefile-Driven Approach
-**Why**: Centralizes deployment logic in one logic. all steps are debuggable, if you have permission. In other words, what you see on your Makefile is what you get on Pipeline.
+**Why**: Centralizes deployment logic in one place. All steps are debuggable if you have permission. In other words, what you see in your Makefile is what you get in the pipeline.
 
 ### 2. No Hardcoded Credentials
-We even avoid using Azure DevOps credentials to avoid duplicating secrets. As long as he running agent has configured the AWS_SERVICE_CONNECTION, the job should be running correctly. 
-If we have to, we can use Azure DevOps credentials, but needs be careful of multiple places of credentials might cause management issues.
+We even avoid using Azure DevOps credentials to avoid duplicating secrets. As long as the running agent has configured the AWS_SERVICE_CONNECTION, the job should run correctly.
+If we have to use Azure DevOps credentials, we need to be careful that multiple places of credentials might cause management issues.
 
 ### 3. Branch-Based Deployment
 **Why**: Clear, predictable deployment workflow
@@ -279,22 +278,15 @@ If we have to, we can use Azure DevOps credentials, but needs be careful of mult
 - Production requires explicit manual action
 - Reduces accidental production deployments
 
-### 4. Sequential Stage Execution
-**Why**: Infrastructure must exist before deploying services
-- Stage 1 ensures infrastructure is ready
-- Stage 2 only runs if Stage 1 succeeds
-- Prevents partial deployments
-- Clear failure points
-
 ## Limitations
 
-This is for demonstration, of course. In reality, all the infrastructure code will be in dedicated separate GitHub repos. So in that case, the pipelines will be split repo by repo. So it wouldn't be like now everything is mangled together. And also, we would like to use semantic versioning. So production deployment actually will have to rely on deploying particular versions rather than always on the latest. But this is easy to extend because we already have make files ready and make already provides quite a lot of targets. So it is totally flexible for us to add them as needed.
+This is for demonstration purposes. In reality, all infrastructure code would be in dedicated separate GitHub repos. In that case, the pipelines would be split repo by repo, so everything wouldn't be mangled together as it is now. Also, we would use semantic versioning, so production deployment would rely on deploying particular versions rather than always deploying the latest. This is easy to extend because we already have Makefiles ready, and Make already provides quite a lot of targets, so it's totally flexible for us to add them as needed.
 
 ---
 
 # Database Migration
 
-**Note this part is only for concept demonstration. I haven't tested it!!!**
+**Note: This part is only for concept demonstration. I haven't tested it!**
 
 ## Why Database Migrations Are NOT Automated
 
@@ -308,7 +300,7 @@ Database migrations are intentionally **excluded from the CI/CD pipeline** for t
 
 ### 2. Downtime Risk Management
 - Database migrations have numerous edge cases that can cause unexpected downtime
-- Automated pipeline failures in production lead to delayed incident descovery and response
+- Automated pipeline failures in production lead to delayed incident discovery and response
 - Manual execution allows immediate human intervention when issues occur
 - Direct control enables faster troubleshooting and recovery
 - **Lesson learned from production incidents**: Human oversight prevents cascading failures
@@ -327,12 +319,12 @@ Database migrations are intentionally **excluded from the CI/CD pipeline** for t
 - **Security**: Ensure proper access controls and audit trails
 
 ### 5. Production Safety
-- Production databases are isolated and require privileged access, which we tend not trust random runners.
+- Production databases are isolated and require privileged access, which we tend not to trust random runners
 - DevOps teams have the expertise to handle exceptions quickly
 - Manual execution provides an additional safety gate
 - Allows for maintenance windows and stakeholder coordination
 
-**Note**: This approach is based on operational experience and may vary by organization. There is no one-size-fits-all solution.
+**Note**: This approach is based on operational experience and may vary by organization. There is no one-size-fits-all solution. **WE CAN AUTOMATE, for sure, but should we?**
 
 ## Migration Strategy
 
@@ -359,9 +351,9 @@ make revert TIMESTAMP=2025-11-10T08:00:00Z ENV=dev
 - Manually verify restored data, then update application endpoints
 - Choose to keep restored DB or discard it based on verification
 
-### Git Workflow and Review Process
+## Git Workflow and Review Process
 
-#### Development Phase
+### Development Phase
 1. **Developer creates migration scripts**:
    - Write forward migration (upgrade)
    - Write backward migration (undo) for quick rollback
@@ -379,7 +371,7 @@ make revert TIMESTAMP=2025-11-10T08:00:00Z ENV=dev
      - ✅ Are there any locking concerns?
      - ✅ Is there a tested rollback plan?
 
-#### Testing Phase
+### Testing Phase
 3. **Merge to develop branch**:
    - Developer runs `make rehearsal ENV=dev` (test on database copy)
    - Developer runs `make apply ENV=dev` (apply to dev environment)
@@ -392,7 +384,7 @@ make revert TIMESTAMP=2025-11-10T08:00:00Z ENV=dev
    - Validates production readiness
    - Measures actual performance impact
 
-#### Production Deployment
+### Production Deployment
 5. **DevOps executes production migration**:
    
    **Pre-execution**:
@@ -415,7 +407,7 @@ make revert TIMESTAMP=2025-11-10T08:00:00Z ENV=dev
      - Verify restored data integrity
      - Update application endpoints to restored database
      - Notify stakeholders
-     - Schedule post-mortem analysis
+     - Schedule post-mortem analysis, with the NEW database containing the wrong DB scene
 
 ### Best Practices
 
@@ -448,7 +440,7 @@ make revert TIMESTAMP=2025-11-10T08:00:00Z ENV=dev
 ---
 
 
-# Further Decisions
+# Further Discussions
 
 ## Security Considerations & Enhancements
 
@@ -459,7 +451,6 @@ The current implementation includes baseline security:
 - ✅ IAM roles with minimal required permissions
 - ✅ Secrets Manager for database credentials
 - ✅ Encryption at rest for RDS
-- ✅ VPC Flow Logs for network monitoring
 
 ### Recommended Security Improvements
 
@@ -530,7 +521,7 @@ The current implementation includes baseline security:
 
 ---
 
-## Scalability Roadmap
+## Scalability Considerations
 
 ### Phase 1: Vertical Scaling (Current)
 **Status**: Implemented
@@ -554,22 +545,21 @@ The current implementation includes baseline security:
 - Application reads from replicas, writes to primary
 - Connection string routing based on query type
 
-**Cost Impact**: +40% database cost (~$20-40/month for dev)
-
 ---
 
 ## Observability & Monitoring Strategy
 
 ### Current State
 Basic CloudWatch integration:
-- ✅ ECS container logs
+- ✅ ECS container logs, cluster level as well as container level
+- ✅ Basic metrics
 - ✅ ALB access logs to S3
 - ✅ RDS Performance Insights (basic)
 - ✅ SNS topic for alarm notifications
 - ❌ No centralized dashboard
 - ❌ No advanced anomaly detection
 - ❌ No distributed tracing
-- ❌ No flexible way of notification for priority differencies
+- ❌ No flexible way of notification for priority differences
   
 ### Recommended: Centralized Observability Platform
 
@@ -587,10 +577,13 @@ Basic CloudWatch integration:
 - CloudWatch Logs → Lambda → Datadog forwarder
 - RDS metrics integration
 - Custom application metrics
+- Code instruments for more detailed business level custom log and metrics
 
 ### Alert Priority Strategy
 
-*Use dedicated alerting system rather than email*
+*Use dedicated alerting system rather than email* 
+
+System like pagerduty is desired for proper, timely notifications.
 
 **P0 - Critical (Immediate Response)**:
 - Service completely down (no healthy tasks)
@@ -617,4 +610,6 @@ Basic CloudWatch integration:
 - Non-critical metric trends
 - **Action**: Review during weekly operations meeting
 
----
+### Health board
+
+- Provide a health board for all the services for transparency of our services. Our engieers feels proude, and our customers feel comfort.
