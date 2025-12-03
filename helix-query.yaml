@@ -1,0 +1,8 @@
+indices:
+  default:
+    include:
+      - '**/*.md'
+    exclude:
+      - '**/node_modules/**'
+      - '**/*.png'
+      - '**/*.jpg'
